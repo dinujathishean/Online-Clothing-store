@@ -1,6 +1,6 @@
 # ThreadedLK - T-Shirt Shop
 
-A modern fashion e-commerce application for a Sri Lankan T-shirt business.
+ThreadedLK is a full-stack fashion e-commerce platform for a Sri Lankan T-shirt business, featuring a modern customer storefront, secure JWT authentication, admin product/order management, and a PostgreSQL-backed API with Prisma.
 
 ## Tech Stack
 
