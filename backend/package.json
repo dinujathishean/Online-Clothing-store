@@ -1,0 +1,40 @@
+{
+  "name": "tshirt-shop-backend",
+  "version": "1.0.0",
+  "description": "Express API for T-shirt shop (users, admin, orders, cart)",
+  "type": "module",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate deploy",
+    "db:push": "prisma db push",
+    "ensure:jwt": "node scripts/ensure-jwt-secret.mjs",
+    "db:seed": "node scripts/seed-admin.mjs"
+  },
+  "prisma": {
+    "seed": "node scripts/seed-admin.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.19.3",
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.6",
+    "dotenv": "^16.6.1",
+    "express": "^4.22.1",
+    "express-validator": "^7.2.0",
+    "helmet": "^8.0.0",
+    "jsonwebtoken": "^9.0.3",
+    "morgan": "^1.10.0",
+    "prisma": "^6.19.3"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  }
+}

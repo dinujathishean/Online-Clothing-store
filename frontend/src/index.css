@@ -1,0 +1,11 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  @apply bg-neutral-50 text-neutral-900 antialiased;
+}
+
+.container-app {
+  @apply mx-auto w-full max-w-7xl px-4;
+}
