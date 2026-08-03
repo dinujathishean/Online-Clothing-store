@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 
 /**
  * Full-screen layout for auth screens (centered card, no main shop header).
+ * Customer auth never shows Admin links — staff use /admin/login directly.
  */
 export default function AuthLayout({ children, variant = 'user', title }) {
   const isAdmin = variant === 'admin';
@@ -14,18 +15,13 @@ export default function AuthLayout({ children, variant = 'user', title }) {
             T-Shirt Shop
           </Link>
           {!isAdmin && (
-            <div className="flex gap-3 text-sm text-slate-400">
-              <Link to="/home" className="hover:text-white">
-                Home
-              </Link>
-              <Link to="/admin/login" className="hover:text-amber-300">
-                Admin
-              </Link>
-            </div>
+            <Link to="/" className="text-sm text-slate-400 hover:text-white">
+              Back to shop
+            </Link>
           )}
           {isAdmin && (
             <Link to="/" className="text-sm text-slate-400 hover:text-white">
-              Customer login
+              View storefront
             </Link>
           )}
         </header>

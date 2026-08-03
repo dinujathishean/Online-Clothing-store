@@ -29,8 +29,8 @@ export default function RegisterPage() {
 
   return (
     <div>
-      <h1 className="text-center text-2xl font-semibold text-white">Create customer account</h1>
-      <p className="mt-1 text-center text-sm text-slate-400">Shop only — admin access is not available from registration</p>
+      <h1 className="text-center text-2xl font-semibold text-white">Create account</h1>
+      <p className="mt-1 text-center text-sm text-slate-400">Join ThreadedLK to shop and track orders</p>
 
       {error && (
         <p className="mt-4 rounded-lg border border-red-500/40 bg-red-950/40 px-3 py-2 text-sm text-red-200" role="alert">
@@ -83,18 +83,12 @@ export default function RegisterPage() {
         </button>
       </form>
 
-        <p className="mt-6 text-center text-sm text-slate-400">
-          Already have an account?{' '}
-          <Link to="/login" className="font-medium text-amber-400 hover:text-amber-300">
-            Sign in
-          </Link>
-        </p>
-        <p className="mt-3 text-center text-xs text-slate-500">
-          Staff?{' '}
-          <Link to="/admin/login" className="text-amber-400/90 hover:underline">
-            Admin login
-          </Link>
-        </p>
+      <p className="mt-6 text-center text-sm text-slate-400">
+        Already have an account?{' '}
+        <Link to="/login" className="font-medium text-amber-400 hover:text-amber-300">
+          Sign in
+        </Link>
+      </p>
     </div>
   );
 }

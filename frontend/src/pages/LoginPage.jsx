@@ -117,12 +117,6 @@ export default function LoginPage() {
             Register
           </Link>
         </p>
-        <p className="mt-3 text-center text-sm text-slate-600">
-          Staff?{' '}
-          <Link to="/admin/login" className="font-medium text-[#2563eb] hover:underline">
-            Admin login
-          </Link>
-        </p>
         <p className="mt-4 text-center text-sm">
           <Link to="/" className="text-slate-600 hover:text-slate-900 hover:underline">
             Continue shopping without signing in
