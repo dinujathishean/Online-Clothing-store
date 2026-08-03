@@ -4,14 +4,6 @@ import { prisma } from '../lib/prisma.js';
 import { signToken } from '../utils/token.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 
-function allowedAdminEmails() {
-  const raw = process.env.ADMIN_EMAILS || '';
-  return raw
-    .split(',')
-    .map((e) => e.trim().toLowerCase())
-    .filter(Boolean);
-}
-
 function tokenResponse(user) {
   const token = signToken({ id: user.id, role: user.role });
   return {
@@ -26,7 +18,9 @@ function tokenResponse(user) {
 }
 
 /**
- * Register a new account. Emails listed in ADMIN_EMAILS receive role ADMIN.
+ * Public customer registration — always creates USER.
+ * Admin accounts are created only via seed/admin tooling, never via /register.
+ * Any `role` in the request body is ignored.
  */
 export const register = asyncHandler(async (req, res) => {
   const errors = validationResult(req);
@@ -44,12 +38,15 @@ export const register = asyncHandler(async (req, res) => {
     return;
   }
 
-  const admins = allowedAdminEmails();
-  const role = admins.includes(emailNorm) ? 'ADMIN' : 'USER';
   const passwordHash = await bcrypt.hash(password, 10);
 
   const user = await prisma.user.create({
-    data: { name: name.trim(), email: emailNorm, password: passwordHash, role },
+    data: {
+      name: name.trim(),
+      email: emailNorm,
+      password: passwordHash,
+      role: 'USER',
+    },
     select: { id: true, name: true, email: true, role: true },
   });
 

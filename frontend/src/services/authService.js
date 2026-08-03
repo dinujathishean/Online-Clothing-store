@@ -1,6 +1,6 @@
 import { api } from './api.js';
 
-/** Register a new customer account. */
+/** Register a new customer account (always USER — never ADMIN). */
 export async function register(name, email, password) {
   return api('/api/auth/register', {
     method: 'POST',
@@ -8,7 +8,7 @@ export async function register(name, email, password) {
   });
 }
 
-/** Login (same endpoint for users and admins; role comes from the database). */
+/** Login. Customer UI rejects ADMIN; use /admin/login for staff. */
 export async function login(email, password) {
   return api('/api/auth/login', {
     method: 'POST',

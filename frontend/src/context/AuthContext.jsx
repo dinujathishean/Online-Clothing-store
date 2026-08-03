@@ -56,11 +56,23 @@ export function AuthProvider({ children }) {
       applyAuthResponse,
       async login(email, password) {
         const r = await authService.login(email, password);
+        const role = r.user?.role;
+        if (role === 'ADMIN' || role === 'admin') {
+          // Customer login page must not accept staff accounts.
+          throw new Error('This is a staff account. Please use Admin login.');
+        }
         applyAuthResponse(r);
+        return r;
       },
       async register(name, email, password) {
         const r = await authService.register(name, email, password);
+        // Public register is customers only — never treat as admin even if API misconfigured.
+        if (r.user?.role === 'ADMIN' || r.user?.role === 'admin') {
+          localStorage.removeItem('token');
+          throw new Error('Registration cannot create admin accounts.');
+        }
         applyAuthResponse(r);
+        return r;
       },
       logout() {
         localStorage.removeItem('token');
