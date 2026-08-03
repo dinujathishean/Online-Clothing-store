@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { api } from '../../services/api.js';
+import { useAuth } from '../../context/AuthContext.jsx';
 
 export default function AdminProductsPage() {
+  const { isAdmin, authReady } = useAuth();
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [form, setForm] = useState({
@@ -29,8 +31,16 @@ export default function AdminProductsPage() {
   }
 
   useEffect(() => {
+    if (!authReady || !isAdmin) return;
     load().catch(() => {});
-  }, []);
+  }, [authReady, isAdmin]);
+
+  if (!authReady) {
+    return <p className="text-slate-400">Checking session…</p>;
+  }
+  if (!isAdmin) {
+    return <Navigate to="/" replace />;
+  }
 
   async function addProduct(e) {
     e.preventDefault();

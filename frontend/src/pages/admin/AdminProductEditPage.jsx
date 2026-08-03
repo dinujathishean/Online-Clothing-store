@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { api } from '../../services/api.js';
+import { useAuth } from '../../context/AuthContext.jsx';
 
 const emptyVariant = () => ({
   size: 'M',
@@ -15,6 +16,7 @@ const emptyVariant = () => ({
 export default function AdminProductEditPage() {
   const { id } = useParams();
   const nav = useNavigate();
+  const { isAdmin, authReady } = useAuth();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [name, setName] = useState('');
@@ -25,6 +27,7 @@ export default function AdminProductEditPage() {
   const [variants, setVariants] = useState([emptyVariant()]);
 
   useEffect(() => {
+    if (!authReady || !isAdmin) return;
     let cancelled = false;
     (async () => {
       try {
@@ -57,7 +60,14 @@ export default function AdminProductEditPage() {
     return () => {
       cancelled = true;
     };
-  }, [id]);
+  }, [id, authReady, isAdmin]);
+
+  if (!authReady) {
+    return <p className="text-slate-400">Checking session…</p>;
+  }
+  if (!isAdmin) {
+    return <Navigate to="/" replace />;
+  }
 
   function updateVariant(index, patch) {
     setVariants((rows) => rows.map((row, i) => (i === index ? { ...row, ...patch } : row)));

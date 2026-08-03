@@ -59,12 +59,10 @@ export default function ProductsPlaceholderPage() {
         </Link>
       </div>
 
-      {products.length === 0 ? (
+          {products.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-slate-700 bg-slate-900/30 p-12 text-center">
           <p className="text-slate-400">No products yet.</p>
-          <p className="mt-2 text-sm text-slate-500">
-            Add items from <Link to="/admin/products" className="text-amber-400 hover:underline">Admin → Manage products</Link>.
-          </p>
+          <p className="mt-2 text-sm text-slate-500">Staff can add items from the admin panel.</p>
         </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

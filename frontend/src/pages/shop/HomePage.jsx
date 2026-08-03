@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import ProductCard from '../../components/product/ProductCard.jsx';
 import { sumStock } from '../../components/product/productUtils.js';
 import { fetchProducts } from '../../services/productService.js';
+import { useAuth } from '../../context/AuthContext.jsx';
 
 function SectionTitle({ eyebrow, title, subtitle, href, actionLabel }) {
   return (
@@ -27,6 +28,7 @@ function SectionTitle({ eyebrow, title, subtitle, href, actionLabel }) {
 }
 
 export default function HomePage() {
+  const { isAdmin } = useAuth();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -125,9 +127,13 @@ export default function HomePage() {
         {!loading && !error && products.length === 0 && (
           <div className="rounded-2xl border border-dashed border-neutral-300 bg-white p-12 text-center">
             <p className="text-neutral-600">Your catalog is empty.</p>
-            <Link to="/admin/products" className="mt-4 inline-block font-semibold text-amber-700 hover:underline">
-              Add products in Admin
-            </Link>
+            {isAdmin ? (
+              <Link to="/admin/products" className="mt-4 inline-block font-semibold text-amber-700 hover:underline">
+                Manage products in Admin
+              </Link>
+            ) : (
+              <p className="mt-3 text-sm text-neutral-500">Check back soon — new tees are on the way.</p>
+            )}
           </div>
         )}
 

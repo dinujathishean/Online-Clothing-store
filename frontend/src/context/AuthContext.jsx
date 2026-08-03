@@ -12,6 +12,7 @@ const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
+  const [authReady, setAuthReady] = useState(false);
 
   const refreshUser = useCallback(async () => {
     const token = localStorage.getItem('token');
@@ -29,7 +30,17 @@ export function AuthProvider({ children }) {
   }, []);
 
   useEffect(() => {
-    refreshUser();
+    let cancelled = false;
+    (async () => {
+      try {
+        await refreshUser();
+      } finally {
+        if (!cancelled) setAuthReady(true);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [refreshUser]);
 
   useEffect(() => {
@@ -51,6 +62,7 @@ export function AuthProvider({ children }) {
   const value = useMemo(
     () => ({
       user,
+      authReady,
       isAdmin: user?.role === 'ADMIN' || user?.role === 'admin',
       refreshUser,
       applyAuthResponse,
@@ -58,7 +70,6 @@ export function AuthProvider({ children }) {
         const r = await authService.login(email, password);
         const role = r.user?.role;
         if (role === 'ADMIN' || role === 'admin') {
-          // Customer login page must not accept staff accounts.
           throw new Error('This is a staff account. Please use Admin login.');
         }
         applyAuthResponse(r);
@@ -66,7 +77,6 @@ export function AuthProvider({ children }) {
       },
       async register(name, email, password) {
         const r = await authService.register(name, email, password);
-        // Public register is customers only — never treat as admin even if API misconfigured.
         if (r.user?.role === 'ADMIN' || r.user?.role === 'admin') {
           localStorage.removeItem('token');
           throw new Error('Registration cannot create admin accounts.');
@@ -80,7 +90,7 @@ export function AuthProvider({ children }) {
         window.dispatchEvent(new Event('auth-changed'));
       },
     }),
-    [user, refreshUser, applyAuthResponse]
+    [user, authReady, refreshUser, applyAuthResponse]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

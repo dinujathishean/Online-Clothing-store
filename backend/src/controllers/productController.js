@@ -146,6 +146,11 @@ export const getProduct = asyncHandler(async (req, res) => {
 });
 
 export const createProduct = asyncHandler(async (req, res) => {
+  if (String(req.user?.role || '').toUpperCase() !== 'ADMIN') {
+    res.status(403).json({ message: 'Only admins can add products' });
+    return;
+  }
+
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     res.status(400).json({ message: 'Invalid input', errors: errors.array() });
@@ -182,6 +187,11 @@ export const createProduct = asyncHandler(async (req, res) => {
 });
 
 export const updateProduct = asyncHandler(async (req, res) => {
+  if (String(req.user?.role || '').toUpperCase() !== 'ADMIN') {
+    res.status(403).json({ message: 'Only admins can edit products' });
+    return;
+  }
+
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     res.status(400).json({ message: 'Invalid input', errors: errors.array() });
@@ -235,6 +245,11 @@ export const updateProduct = asyncHandler(async (req, res) => {
 });
 
 export const deleteProduct = asyncHandler(async (req, res) => {
+  if (String(req.user?.role || '').toUpperCase() !== 'ADMIN') {
+    res.status(403).json({ message: 'Only admins can delete products' });
+    return;
+  }
+
   const id = Number(req.params.id);
   const existing = await prisma.product.findUnique({ where: { id } });
   if (!existing) {
