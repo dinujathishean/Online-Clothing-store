@@ -103,3 +103,28 @@ npm run dev
 - Set `VITE_API_URL` to your deployed API URL before building frontend.
 - Backend must run `prisma migrate deploy` during deployment.
 - Keep secrets (`JWT_SECRET`, DB credentials) only in environment variables.
+
+## Deploy frontend on Vercel
+
+1. Push this repo to GitHub (already done).
+2. Go to [https://vercel.com/new](https://vercel.com/new) and import `dinujathishean/Online-Clothing-store`.
+3. Configure the project:
+   - **Root Directory:** `frontend`
+   - **Framework Preset:** Vite
+   - **Build Command:** `npm run build`
+   - **Output Directory:** `dist`
+4. Add Environment Variable:
+   - `VITE_API_URL` = your live backend URL (example: `https://your-api.onrender.com`)
+     - No trailing slash
+5. Deploy.
+
+Important: Vercel hosts the **React frontend only**. Your Express + PostgreSQL backend must be hosted separately (Render, Railway, Fly.io, etc.), then point `VITE_API_URL` to that API.
+
+Backend production env example:
+
+```env
+DATABASE_URL=postgresql://...
+JWT_SECRET=long-random-secret
+CLIENT_ORIGIN=https://your-frontend.vercel.app
+PORT=5000
+```
