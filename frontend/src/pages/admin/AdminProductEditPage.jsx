@@ -3,6 +3,7 @@ import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { api } from '../../services/api.js';
 import { useAuth } from '../../context/AuthContext.jsx';
+import ImageUploadField from '../../components/admin/ImageUploadField.jsx';
 
 const emptyVariant = () => ({
   size: 'M',
@@ -22,8 +23,9 @@ export default function AdminProductEditPage() {
   const [name, setName] = useState('');
   const [category, setCategory] = useState('');
   const [description, setDescription] = useState('');
-  const [imagesText, setImagesText] = useState('');
+  const [images, setImages] = useState([]);
   const [isActive, setIsActive] = useState(true);
+  const [discountPercent, setDiscountPercent] = useState(0);
   const [variants, setVariants] = useState([emptyVariant()]);
 
   useEffect(() => {
@@ -37,8 +39,9 @@ export default function AdminProductEditPage() {
         setName(p.name || '');
         setCategory(p.category || '');
         setDescription(p.description || '');
-        setImagesText((p.images || []).join(', '));
+        setImages(Array.isArray(p.images) ? p.images : []);
         setIsActive(p.isActive !== false);
+        setDiscountPercent(Number(p.discountPercent) || 0);
         setVariants(
           (p.variants || []).length
             ? p.variants.map((v) => ({
@@ -89,16 +92,13 @@ export default function AdminProductEditPage() {
     }
     setSaving(true);
     try {
-      const images = imagesText
-        .split(',')
-        .map((s) => s.trim())
-        .filter(Boolean);
       const payload = {
         name: name.trim(),
         category: category.trim(),
         description,
         images,
         isActive,
+        discountPercent: Math.min(100, Math.max(0, Number(discountPercent) || 0)),
         variants: variants.map((v) => ({
           size: v.size.trim(),
           color: v.color.trim(),
@@ -151,14 +151,26 @@ export default function AdminProductEditPage() {
             <input type="checkbox" checked={isActive} onChange={(e) => setIsActive(e.target.checked)} />
             <span className="text-sm text-slate-300">Active on storefront</span>
           </label>
+          <label className="block">
+            <span className="text-xs font-medium text-slate-400">Discount % (0–100)</span>
+            <input
+              type="number"
+              min={0}
+              max={100}
+              className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white"
+              value={discountPercent}
+              onChange={(e) => setDiscountPercent(e.target.value)}
+            />
+            <span className="mt-1 block text-xs text-slate-500">Customers see sale price and “% Off” badge</span>
+          </label>
           <label className="block md:col-span-2">
             <span className="text-xs font-medium text-slate-400">Description</span>
             <textarea className="mt-1 min-h-[88px] w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white" value={description} onChange={(e) => setDescription(e.target.value)} />
           </label>
-          <label className="block md:col-span-2">
-            <span className="text-xs font-medium text-slate-400">Image URLs (comma-separated)</span>
-            <input className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white" value={imagesText} onChange={(e) => setImagesText(e.target.value)} placeholder="https://…" />
-          </label>
+          <div className="space-y-2 md:col-span-2">
+            <span className="text-xs font-medium text-slate-400">Gallery images</span>
+            <ImageUploadField urls={images} onChange={setImages} multiple label="Upload tee photos from PC" />
+          </div>
         </div>
 
         <div className="space-y-3">
@@ -169,23 +181,25 @@ export default function AdminProductEditPage() {
             </button>
           </div>
           {variants.map((v, i) => (
-            <div key={i} className="grid gap-2 rounded-lg border border-slate-800 bg-slate-900/40 p-3 sm:grid-cols-6">
-              <input className="rounded border border-slate-700 bg-slate-950 px-2 py-2 text-sm text-white" placeholder="Size" value={v.size} onChange={(e) => updateVariant(i, { size: e.target.value })} />
-              <input className="rounded border border-slate-700 bg-slate-950 px-2 py-2 text-sm text-white" placeholder="Colour" value={v.color} onChange={(e) => updateVariant(i, { color: e.target.value })} />
-              <input className="rounded border border-slate-700 bg-slate-950 px-2 py-2 text-sm text-white" placeholder="SKU" value={v.sku} onChange={(e) => updateVariant(i, { sku: e.target.value })} />
-              <input type="number" className="rounded border border-slate-700 bg-slate-950 px-2 py-2 text-sm text-white" placeholder="Price" value={v.price} onChange={(e) => updateVariant(i, { price: e.target.value })} />
-              <input type="number" className="rounded border border-slate-700 bg-slate-950 px-2 py-2 text-sm text-white" placeholder="Stock" value={v.stock} onChange={(e) => updateVariant(i, { stock: e.target.value })} />
-              <div className="flex gap-2 sm:col-span-1">
-                <input
-                  className="min-w-0 flex-1 rounded border border-slate-700 bg-slate-950 px-2 py-2 text-sm text-white"
-                  placeholder="Variant image URL"
-                  value={v.image}
-                  onChange={(e) => updateVariant(i, { image: e.target.value })}
-                />
-                <button type="button" className="shrink-0 text-red-400" onClick={() => removeVariant(i)} disabled={variants.length <= 1}>
-                  ✕
-                </button>
+            <div key={i} className="space-y-2 rounded-lg border border-slate-800 bg-slate-900/40 p-3">
+              <div className="grid gap-2 sm:grid-cols-5">
+                <input className="rounded border border-slate-700 bg-slate-950 px-2 py-2 text-sm text-white" placeholder="Size" value={v.size} onChange={(e) => updateVariant(i, { size: e.target.value })} />
+                <input className="rounded border border-slate-700 bg-slate-950 px-2 py-2 text-sm text-white" placeholder="Colour" value={v.color} onChange={(e) => updateVariant(i, { color: e.target.value })} />
+                <input className="rounded border border-slate-700 bg-slate-950 px-2 py-2 text-sm text-white" placeholder="SKU" value={v.sku} onChange={(e) => updateVariant(i, { sku: e.target.value })} />
+                <input type="number" className="rounded border border-slate-700 bg-slate-950 px-2 py-2 text-sm text-white" placeholder="Price" value={v.price} onChange={(e) => updateVariant(i, { price: e.target.value })} />
+                <div className="flex gap-2">
+                  <input type="number" className="min-w-0 flex-1 rounded border border-slate-700 bg-slate-950 px-2 py-2 text-sm text-white" placeholder="Stock" value={v.stock} onChange={(e) => updateVariant(i, { stock: e.target.value })} />
+                  <button type="button" className="shrink-0 text-red-400" onClick={() => removeVariant(i)} disabled={variants.length <= 1}>
+                    ✕
+                  </button>
+                </div>
               </div>
+              <ImageUploadField
+                urls={v.image ? [v.image] : []}
+                onChange={(urls) => updateVariant(i, { image: urls[0] || '' })}
+                multiple={false}
+                label="Upload variant photo"
+              />
             </div>
           ))}
         </div>

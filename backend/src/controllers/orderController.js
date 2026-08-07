@@ -127,7 +127,12 @@ export const checkout = asyncHandler(async (req, res) => {
           });
         }
 
-        const unitPrice = variant.price;
+        const unitPrice = (() => {
+          const list = Number(variant.price);
+          const pct = Math.min(100, Math.max(0, Number(variant.product.discountPercent) || 0));
+          const sale = pct ? Math.round(list * (100 - pct)) / 100 : list;
+          return new Prisma.Decimal(sale);
+        })();
         subtotal = subtotal.add(unitPrice.mul(row.quantity));
 
         lines.push({

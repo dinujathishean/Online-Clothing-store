@@ -11,10 +11,37 @@ export function productImage(product, variant) {
   return '';
 }
 
+export function getDiscountPercent(product) {
+  const n = Number(product?.discountPercent);
+  if (Number.isNaN(n) || n <= 0) return 0;
+  return Math.min(100, Math.round(n));
+}
+
+/** List price with product discount applied. */
+export function salePrice(listPrice, productOrPercent) {
+  const list = Number(listPrice);
+  if (Number.isNaN(list)) return null;
+  const pct =
+    typeof productOrPercent === 'number'
+      ? productOrPercent
+      : getDiscountPercent(productOrPercent);
+  if (!pct) return list;
+  return Math.round(list * (100 - pct) * 100) / 100;
+}
+
+export function displayMinPrice(product) {
+  if (typeof product?.minSalePrice === 'number') return product.minSalePrice;
+  if (typeof product?.minPrice === 'number') return salePrice(product.minPrice, product);
+  return null;
+}
+
 /** @returns {{ type: string, label: string }[]} */
 export function getProductBadges(product) {
   const badges = [];
   if (!product) return badges;
+
+  const discount = getDiscountPercent(product);
+  if (discount > 0) badges.push({ type: 'sale', label: `${discount}% Off` });
 
   const created = product.createdAt ? new Date(product.createdAt) : null;
   if (created) {

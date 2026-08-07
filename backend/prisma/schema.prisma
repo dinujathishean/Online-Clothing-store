@@ -20,18 +20,20 @@ model User {
 
 /// T-shirt catalog item with one or more size/color/stock variants.
 model Product {
-  id          Int               @id @default(autoincrement())
-  name        String
-  slug        String            @unique
-  description String            @default("")
-  category    String
-  images      String[]          @default([])
-  isActive    Boolean           @default(true)
-  createdAt   DateTime          @default(now())
-  updatedAt   DateTime          @updatedAt
-  variants    ProductVariant[]
-  createdById Int?
-  createdBy   User?             @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  id               Int               @id @default(autoincrement())
+  name             String
+  slug             String            @unique
+  description      String            @default("")
+  category         String
+  images           String[]          @default([])
+  isActive         Boolean           @default(true)
+  /// Percent off list price (0–100). Applied on storefront + checkout.
+  discountPercent  Int               @default(0)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  variants         ProductVariant[]
+  createdById      Int?
+  createdBy        User?             @relation(fields: [createdById], references: [id], onDelete: SetNull)
 }
 
 model ProductVariant {

@@ -1,15 +1,14 @@
 import { Link } from 'react-router-dom';
+import AurvexaLogo from '../brand/AurvexaLogo.jsx';
 
 export default function ShopFooter() {
   return (
     <footer className="border-t border-neutral-200 bg-white py-12 text-sm text-neutral-600">
       <div className="container-app grid gap-10 md:grid-cols-4">
         <div>
-          <p className="font-display text-lg font-bold text-neutral-900">
-            Threaded<span className="text-amber-600">LK</span>
-          </p>
+          <AurvexaLogo to="/" size="md" />
           <p className="mt-2 leading-relaxed">
-            Premium casual & oversized tees stitched for Sri Lankan weather — breathable cotton, honest fits, island-wide delivery.
+            Premium casual & oversized tees from AURVEXA — breathable cotton, honest fits, island-wide delivery.
           </p>
         </div>
         <div>
@@ -48,8 +47,8 @@ export default function ShopFooter() {
           <ul className="mt-3 space-y-2">
             <li>Colombo · Island-wide courier</li>
             <li>
-              <a href="mailto:hello@threadedlk.example" className="hover:text-neutral-900 hover:underline">
-                hello@threadedlk.example
+              <a href="mailto:hello@aurvexa.example" className="hover:text-neutral-900 hover:underline">
+                hello@aurvexa.example
               </a>
             </li>
             <li>
@@ -61,7 +60,7 @@ export default function ShopFooter() {
         </div>
       </div>
       <p className="container-app mt-10 border-t border-neutral-100 pt-6 text-center text-xs text-neutral-400">
-        © {new Date().getFullYear()} ThreadedLK. Original storefront — not affiliated with any third-party retailer.
+        © {new Date().getFullYear()} AURVEXA. All rights reserved.
       </p>
     </footer>
   );

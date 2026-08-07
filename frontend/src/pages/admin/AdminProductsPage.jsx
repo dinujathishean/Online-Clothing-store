@@ -3,6 +3,7 @@ import { Link, Navigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { api } from '../../services/api.js';
 import { useAuth } from '../../context/AuthContext.jsx';
+import ImageUploadField from '../../components/admin/ImageUploadField.jsx';
 
 export default function AdminProductsPage() {
   const { isAdmin, authReady } = useAuth();
@@ -12,7 +13,8 @@ export default function AdminProductsPage() {
     name: '',
     category: '',
     description: '',
-    imagesText: '',
+    images: [],
+    discountPercent: 0,
     price: 2490,
     stock: 10,
     size: 'M',
@@ -45,17 +47,14 @@ export default function AdminProductsPage() {
   async function addProduct(e) {
     e.preventDefault();
     try {
-      const images = form.imagesText
-        .split(',')
-        .map((s) => s.trim())
-        .filter(Boolean);
       await api('/api/admin/products', {
         method: 'POST',
         body: JSON.stringify({
           name: form.name.trim(),
           category: form.category.trim(),
           description: form.description.trim(),
-          images,
+          images: form.images,
+          discountPercent: Math.min(100, Math.max(0, Number(form.discountPercent) || 0)),
           variants: [
             {
               size: String(form.size).trim(),
@@ -73,7 +72,8 @@ export default function AdminProductsPage() {
         name: '',
         category: form.category,
         description: '',
-        imagesText: '',
+        images: [],
+        discountPercent: 0,
         price: 2490,
         stock: 10,
         size: 'M',
@@ -104,7 +104,7 @@ export default function AdminProductsPage() {
         <div>
           <p className="text-xs font-semibold uppercase tracking-widest text-amber-500/90">Admin</p>
           <h1 className="mt-1 text-2xl font-bold text-white">Product management</h1>
-          <p className="mt-2 text-sm text-slate-400">Create a product with one variant first, then open Edit to add more sizes/colours.</p>
+          <p className="mt-2 text-sm text-slate-400">Upload tee photos from your PC, then set size, colour, price and stock.</p>
         </div>
         <Link to="/admin" className="text-sm text-amber-400 hover:text-amber-300">
           ← Dashboard
@@ -138,23 +138,45 @@ export default function AdminProductsPage() {
           value={form.description}
           onChange={(e) => setForm({ ...form, description: e.target.value })}
         />
-        <input
-          className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white md:col-span-2"
-          placeholder="Gallery image URLs (comma-separated)"
-          value={form.imagesText}
-          onChange={(e) => setForm({ ...form, imagesText: e.target.value })}
-        />
+
+        <div className="space-y-2 rounded-lg border border-slate-800 bg-slate-950/50 p-3 md:col-span-2">
+          <p className="text-xs font-medium uppercase tracking-wider text-slate-500">Gallery images</p>
+          <ImageUploadField
+            urls={form.images}
+            onChange={(images) => setForm({ ...form, images })}
+            multiple
+            label="Upload tee photos from PC"
+          />
+        </div>
+
+        <label className="md:col-span-2">
+          <span className="mb-1 block text-xs text-slate-500">Discount % (0–100) — shown on storefront</span>
+          <input
+            type="number"
+            min={0}
+            max={100}
+            className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white"
+            placeholder="Discount %"
+            value={form.discountPercent}
+            onChange={(e) => setForm({ ...form, discountPercent: e.target.value })}
+          />
+        </label>
         <input className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white" placeholder="Size" value={form.size} onChange={(e) => setForm({ ...form, size: e.target.value })} />
         <input className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white" placeholder="Colour" value={form.color} onChange={(e) => setForm({ ...form, color: e.target.value })} />
         <input className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white" placeholder="SKU (optional)" value={form.sku} onChange={(e) => setForm({ ...form, sku: e.target.value })} />
         <input type="number" className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white" placeholder="Price (LKR)" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} />
         <input type="number" className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white" placeholder="Stock" value={form.stock} onChange={(e) => setForm({ ...form, stock: e.target.value })} />
-        <input
-          className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white md:col-span-2"
-          placeholder="Variant image URL (optional)"
-          value={form.variantImage}
-          onChange={(e) => setForm({ ...form, variantImage: e.target.value })}
-        />
+
+        <div className="space-y-2 rounded-lg border border-slate-800 bg-slate-950/50 p-3 md:col-span-2">
+          <p className="text-xs font-medium uppercase tracking-wider text-slate-500">Variant image (optional)</p>
+          <ImageUploadField
+            urls={form.variantImage ? [form.variantImage] : []}
+            onChange={(urls) => setForm({ ...form, variantImage: urls[0] || '' })}
+            multiple={false}
+            label="Upload variant photo"
+          />
+        </div>
+
         <button type="submit" className="rounded-lg bg-amber-500 px-4 py-3 font-semibold text-slate-950 md:col-span-2">
           Add product
         </button>
@@ -166,6 +188,7 @@ export default function AdminProductsPage() {
             <tr>
               <th className="px-4 py-3">Product</th>
               <th className="px-4 py-3">Category</th>
+              <th className="px-4 py-3">Discount</th>
               <th className="px-4 py-3">Status</th>
               <th className="px-4 py-3 text-right">Actions</th>
             </tr>
@@ -175,6 +198,13 @@ export default function AdminProductsPage() {
               <tr key={p.id} className="border-b border-slate-800/80 hover:bg-slate-900/40">
                 <td className="px-4 py-3 font-medium text-white">{p.name}</td>
                 <td className="px-4 py-3">{p.category}</td>
+                <td className="px-4 py-3">
+                  {Number(p.discountPercent) > 0 ? (
+                    <span className="text-rose-400">{p.discountPercent}% off</span>
+                  ) : (
+                    <span className="text-slate-600">—</span>
+                  )}
+                </td>
                 <td className="px-4 py-3">{p.isActive ? <span className="text-emerald-400">Active</span> : <span className="text-slate-500">Hidden</span>}</td>
                 <td className="px-4 py-3 text-right">
                   <Link to={`/admin/products/${p.id}/edit`} className="mr-4 font-medium text-amber-400 hover:text-amber-300">

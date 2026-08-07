@@ -1,4 +1,4 @@
-const KEY = 'threaded_cart_v1';
+const KEY = 'aurvexa_cart_v1';
 
 function read() {
   try {

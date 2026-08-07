@@ -1,6 +1,6 @@
-# ThreadedLK - T-Shirt Shop
+# AURVEXA — Clothing Store
 
-ThreadedLK is a full-stack fashion e-commerce platform for a Sri Lankan T-shirt business, featuring a modern customer storefront, secure JWT authentication, admin product/order management, and a PostgreSQL-backed API with Prisma.
+AURVEXA is a full-stack fashion e-commerce platform for a Sri Lankan clothing brand, featuring a modern customer storefront, secure JWT authentication, admin product/order management, and a PostgreSQL-backed API with Prisma.
 
 ## Tech Stack
 
@@ -30,6 +30,20 @@ ThreadedLK is a full-stack fashion e-commerce platform for a Sri Lankan T-shirt 
 
 ## Local Development
 
+Prefer a **single** root `npm run dev` so you do not accidentally spawn duplicate Vite/API processes (that previously contributed to esbuild OOM crashes).
+
+### One-command start (recommended)
+
+From the repo root (after backend/frontend deps and `.env` are set up once):
+
+```bash
+npm run dev
+```
+
+This starts the API on port **5000** and Vite on **5173** via `scripts/dev.mjs` (no extra packages). Do not open a second terminal and run `npm run dev` again in `frontend/` or `backend/` while this is running.
+
+**Note:** Keep several GB free on the drive that holds this project. A nearly full disk (`ENOSPC`) has caused Vite/esbuild and npm to crash mid-dev.
+
 ### 1) Backend setup
 
 ```bash
@@ -45,12 +59,11 @@ JWT_SECRET="your-long-random-secret"
 CLIENT_ORIGIN="http://localhost:5173"
 ```
 
-Run database migrations and start backend:
+Run database migrations (once):
 
 ```bash
 npx prisma migrate deploy
 npm run db:generate
-npm run dev
 ```
 
 Optional: seed admin user
@@ -62,6 +75,8 @@ npm run db:seed
 Default seeded admin:
 - Email: `admin@tshirtshop.com`
 - Password: `Admin@123`
+
+API-only: `npm run dev:backend` from root, or `npm run dev` inside `backend/`.
 
 ### 2) Frontend setup
 
@@ -76,11 +91,7 @@ Create `frontend/.env`:
 VITE_API_URL="http://localhost:5000"
 ```
 
-Start frontend:
-
-```bash
-npm run dev
-```
+Storefront-only: `npm run dev:frontend` from root, or `npm run dev` inside `frontend/`.
 
 ## Main Routes
 

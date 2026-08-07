@@ -1,6 +1,7 @@
 import { getProductBadges } from './productUtils.js';
 
 const styles = {
+  sale: 'bg-rose-600 text-white',
   new: 'bg-emerald-600 text-white',
   hot: 'bg-orange-500 text-white',
   stock: 'bg-slate-800 text-white',

@@ -17,6 +17,7 @@ export const createProductRules = [
   body('slug').optional().trim().notEmpty(),
   body('images').optional().isArray(),
   body('isActive').optional().isBoolean(),
+  body('discountPercent').optional().isInt({ min: 0, max: 100 }),
   ...variantRules,
 ];
 
@@ -28,6 +29,7 @@ export const updateProductRules = [
   body('slug').optional().trim().notEmpty(),
   body('images').optional().isArray(),
   body('isActive').optional().isBoolean(),
+  body('discountPercent').optional().isInt({ min: 0, max: 100 }),
   body('variants').optional().isArray({ min: 1 }),
   body('variants.*.size').optional().trim().notEmpty(),
   body('variants.*.color').optional().trim().notEmpty(),

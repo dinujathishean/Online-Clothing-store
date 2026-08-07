@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import AurvexaLogo from '../brand/AurvexaLogo.jsx';
 
 /**
  * Full-screen layout for auth screens (centered card, no main shop header).
@@ -11,9 +12,7 @@ export default function AuthLayout({ children, variant = 'user', title }) {
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-amber-900/25 via-slate-950 to-slate-950" />
       <div className="relative z-10 mx-auto flex min-h-screen max-w-lg flex-col px-4 py-10">
         <header className="mb-8 flex items-center justify-between">
-          <Link to="/" className="text-lg font-semibold tracking-tight text-amber-400">
-            T-Shirt Shop
-          </Link>
+          <AurvexaLogo to="/" size="lg" />
           {!isAdmin && (
             <Link to="/" className="text-sm text-slate-400 hover:text-white">
               Back to shop

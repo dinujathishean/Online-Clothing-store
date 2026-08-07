@@ -9,3 +9,149 @@ body {
 .container-app {
   @apply mx-auto w-full max-w-7xl px-4;
 }
+
+/* Hero watermark: two diagonals top-right → bottom-center */
+@keyframes aurvexa-marquee-left {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+@keyframes aurvexa-marquee-right {
+  from {
+    transform: translate3d(-50%, 0, 0);
+  }
+  to {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.aurvexa-watermark-stage {
+  position: absolute;
+  top: -4%;
+  right: -6%;
+  left: auto;
+  width: min(118vw, 82rem);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: clamp(1.5rem, 4vw, 3.25rem);
+  overflow: hidden;
+  opacity: 0.5;
+  transform-origin: top right;
+  transform: rotate(-42deg);
+  mask-image: linear-gradient(90deg, transparent 0%, #000 14%, #000 100%);
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 14%, #000 100%);
+}
+
+.aurvexa-watermark-line {
+  overflow: hidden;
+  width: 100%;
+}
+
+.aurvexa-watermark-line--b {
+  transform: translateX(6%);
+}
+
+.aurvexa-watermark-glyph {
+  display: inline-block;
+  white-space: nowrap;
+  font-size: clamp(1.35rem, 3.8vw, 3.25rem);
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  background-image: linear-gradient(
+    105deg,
+    rgba(139, 105, 20, 0.55) 0%,
+    rgba(232, 200, 114, 0.7) 28%,
+    rgba(212, 175, 55, 0.65) 48%,
+    rgba(184, 134, 11, 0.55) 68%,
+    rgba(232, 200, 114, 0.7) 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.aurvexa-track-left {
+  animation: aurvexa-marquee-left 36s linear infinite;
+}
+
+.aurvexa-track-right {
+  animation: aurvexa-marquee-right 42s linear infinite;
+}
+
+@media (max-width: 640px) {
+  .aurvexa-watermark-stage {
+    top: -2%;
+    right: -18%;
+    width: min(145vw, 36rem);
+    opacity: 0.36;
+    gap: 1.1rem;
+    transform: rotate(-52deg);
+  }
+
+  .aurvexa-watermark-line--b {
+    transform: translateX(5%);
+  }
+
+  .aurvexa-watermark-glyph {
+    font-size: clamp(1.05rem, 5.5vw, 1.65rem);
+    letter-spacing: 0.16em;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aurvexa-track-left,
+  .aurvexa-track-right {
+    animation: none;
+  }
+}
+
+/* Hero supporting line — rich metallic gold; shading drifts L↔R slowly */
+@keyframes hero-gold-shimmer {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 100% 50%;
+  }
+}
+
+.hero-gold-tagline {
+  width: fit-content;
+  max-width: 100%;
+  white-space: nowrap;
+  font-size: clamp(0.95rem, 3.5vw, 2.25rem);
+  font-weight: 700;
+  background-image: linear-gradient(
+    105deg,
+    #8b6914 0%,
+    #c9a227 18%,
+    #e8c872 32%,
+    #d4af37 45%,
+    #b8860b 58%,
+    #6b4f0e 72%,
+    #d4a017 88%,
+    #8b6914 100%
+  );
+  background-size: 300% auto;
+  background-position: 0% 50%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  padding-bottom: 0.35em;
+  border-bottom: 1px solid rgba(201, 162, 39, 0.55);
+  animation: hero-gold-shimmer 12s ease-in-out infinite alternate;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-gold-tagline {
+    animation: none;
+    background-size: 100% auto;
+    background-position: center;
+  }
+}

@@ -1,11 +1,13 @@
 import { Link } from 'react-router-dom';
 import ProductBadges from './ProductBadges.jsx';
-import { formatLKR, productImage, sumStock } from './productUtils.js';
+import { displayMinPrice, formatLKR, getDiscountPercent, productImage, sumStock } from './productUtils.js';
 
 export default function ProductCard({ product, className = '' }) {
   const img = productImage(product, product?.variants?.[0]);
   const stock = sumStock(product);
-  const price = typeof product.minPrice === 'number' ? product.minPrice : null;
+  const discount = getDiscountPercent(product);
+  const sale = displayMinPrice(product);
+  const list = typeof product.minPrice === 'number' ? product.minPrice : null;
 
   return (
     <Link
@@ -32,7 +34,12 @@ export default function ProductCard({ product, className = '' }) {
         <h3 className="mt-1 line-clamp-2 font-display text-base font-semibold text-neutral-900 group-hover:underline">
           {product.name}
         </h3>
-        <p className="mt-2 font-semibold text-neutral-900">{price != null ? formatLKR(price) : '—'}</p>
+        <div className="mt-2 flex flex-wrap items-baseline gap-2">
+          <p className="font-semibold text-neutral-900">{sale != null ? formatLKR(sale) : '—'}</p>
+          {discount > 0 && list != null && (
+            <p className="text-sm text-neutral-400 line-through">{formatLKR(list)}</p>
+          )}
+        </div>
         <p className="mt-auto pt-2 text-xs text-neutral-500">{stock > 0 ? `${stock} pcs across sizes` : 'Unavailable'}</p>
       </div>
     </Link>

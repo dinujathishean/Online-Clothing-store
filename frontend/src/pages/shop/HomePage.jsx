@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import AurvexaLogo from '../../components/brand/AurvexaLogo.jsx';
 import ProductCard from '../../components/product/ProductCard.jsx';
 import { sumStock } from '../../components/product/productUtils.js';
 import { fetchProducts } from '../../services/productService.js';
@@ -23,6 +24,50 @@ function SectionTitle({ eyebrow, title, subtitle, href, actionLabel }) {
           {actionLabel || 'Shop now'}
         </Link>
       )}
+    </div>
+  );
+}
+
+/** Watermark word — .LK only for this hero marquee. */
+const WATERMARK_WORD = 'AURVEXA.LK';
+
+/** Duplicated strip for a seamless translateX loop. */
+function WatermarkStrip({ count = 6 }) {
+  return (
+    <div className="flex shrink-0 items-center">
+      {Array.from({ length: count }, (_, i) => (
+        <span key={i} className="aurvexa-watermark-glyph mx-6 font-display md:mx-10">
+          {WATERMARK_WORD}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+/** Soft hero backdrop — two diagonals from top-right toward bottom-center. */
+function AurvexaBannerBackdrop() {
+  return (
+    <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
+      <div className="absolute inset-0 bg-gradient-to-br from-neutral-950 via-neutral-900 to-neutral-800" />
+      <div className="absolute -left-16 top-0 h-64 w-64 rounded-full bg-amber-500/25 blur-3xl" />
+      <div className="absolute bottom-0 right-0 h-80 w-80 rounded-full bg-teal-600/20 blur-3xl" />
+
+      <div className="aurvexa-watermark-stage">
+        <div className="aurvexa-watermark-line aurvexa-watermark-line--a">
+          <div className="aurvexa-track-left flex w-max will-change-transform">
+            <WatermarkStrip />
+            <WatermarkStrip />
+          </div>
+        </div>
+        <div className="aurvexa-watermark-line aurvexa-watermark-line--b">
+          <div className="aurvexa-track-right flex w-max will-change-transform">
+            <WatermarkStrip />
+            <WatermarkStrip />
+          </div>
+        </div>
+      </div>
+
+      <div className="absolute inset-0 bg-gradient-to-t from-neutral-950/80 via-transparent to-neutral-950/40" />
     </div>
   );
 }
@@ -70,46 +115,30 @@ export default function HomePage() {
 
   return (
     <div>
-      <section className="relative overflow-hidden bg-neutral-900 text-white">
-        <div className="absolute inset-0 opacity-40">
-          <div className="absolute -left-20 top-10 h-72 w-72 rounded-full bg-amber-500 blur-[100px]" />
-          <div className="absolute bottom-0 right-0 h-96 w-96 rounded-full bg-teal-600 blur-[120px]" />
-        </div>
-        <div className="container-app relative py-16 md:flex md:items-center md:gap-12 md:py-24">
-          <div className="max-w-xl">
-            <p className="text-xs font-semibold uppercase tracking-[0.25em] text-amber-400">Island-made attitude</p>
-            <h1 className="mt-4 font-display text-4xl font-bold leading-tight md:text-6xl">
-              Tees built for Colombo heat & weekend hangs.
+      <section className="relative min-h-[78vh] overflow-hidden text-white md:min-h-[85vh]">
+        <AurvexaBannerBackdrop />
+        <div className="container-app relative z-10 flex min-h-[78vh] flex-col justify-center py-20 md:min-h-[85vh] md:py-28">
+          <div className="max-w-3xl">
+            <AurvexaLogo height="clamp(3.5rem, 10vw, 5rem)" alt="AURVEXA" />
+            <h1 className="hero-gold-tagline mt-5 font-display whitespace-nowrap font-bold leading-tight tracking-[0.04em]">
+              The Gold Standard of Modern Fashion.
             </h1>
-            <p className="mt-4 text-lg text-neutral-300">
-              Oversized drops, crisp casual fits, and limited graphic runs — delivered across Sri Lanka.
+            <p className="mt-4 max-w-lg text-lg text-neutral-300">
+              Fresh drops from AURVEXA — breathable cotton, bold fits, delivered island-wide.
             </p>
-            <div className="mt-8 flex flex-wrap gap-4">
+            <div className="mt-10 flex flex-wrap gap-4">
               <Link
                 to="/products"
-                className="rounded-full bg-white px-8 py-3 text-sm font-semibold text-neutral-900 hover:bg-neutral-100"
+                className="rounded-full bg-white px-8 py-3 text-sm font-semibold text-neutral-900 transition hover:bg-neutral-100"
               >
                 Shop now
               </Link>
               <Link
                 to="/products?sort=newest"
-                className="rounded-full border border-white/40 px-8 py-3 text-sm font-semibold text-white hover:bg-white/10"
+                className="rounded-full border border-white/40 px-8 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
               >
                 New arrivals
               </Link>
-            </div>
-          </div>
-          <div className="relative mt-12 hidden flex-1 md:block">
-            <div className="aspect-[4/5] overflow-hidden rounded-2xl border border-white/10 bg-neutral-800 shadow-2xl">
-              <img
-                src="https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=800&q=80"
-                alt=""
-                className="h-full w-full object-cover opacity-90"
-              />
-            </div>
-            <div className="absolute -bottom-6 -left-6 rounded-xl border border-white/10 bg-white/10 px-4 py-3 text-sm backdrop-blur-md">
-              <p className="font-semibold text-white">LKR-friendly pricing</p>
-              <p className="text-neutral-300">Cotton-heavy blanks · S–XXL</p>
             </div>
           </div>
         </div>

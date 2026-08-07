@@ -1,4 +1,5 @@
 import { NavLink, Outlet } from 'react-router-dom';
+import AurvexaLogo from '../components/brand/AurvexaLogo.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 
 const linkCls = ({ isActive }) =>
@@ -13,8 +14,9 @@ export default function AdminLayout() {
     <div className="min-h-screen bg-slate-950 text-slate-100">
       <div className="border-b border-slate-800 bg-slate-900/80">
         <div className="container-app flex h-14 items-center justify-between">
-          <NavLink to="/admin" className="font-semibold text-amber-400">
-            Threaded Admin
+          <NavLink to="/admin" className="inline-flex items-end gap-2 no-underline" aria-label="AURVEXA Admin">
+            <AurvexaLogo size="sm" alt="" />
+            <span className="pb-0.5 text-sm font-semibold text-amber-400">Admin</span>
           </NavLink>
           <div className="flex items-center gap-4 text-sm">
             <NavLink to="/" className="text-slate-500 hover:text-white">

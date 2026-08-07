@@ -3,7 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import ProductBadges from '../../components/product/ProductBadges.jsx';
 import { fetchProduct } from '../../services/productService.js';
-import { formatLKR, productImage, variantSku } from '../../components/product/productUtils.js';
+import { formatLKR, productImage, salePrice, variantSku } from '../../components/product/productUtils.js';
 import { useCart } from '../../context/CartContext.jsx';
 
 export default function ProductDetailPage() {
@@ -50,10 +50,13 @@ export default function ProductDetailPage() {
       toast.error('This variant is out of stock.');
       return;
     }
+    const unit = selected.salePrice ?? salePrice(selected.price, product);
     add(product.id, selected.id, 1, {
       name: product.name,
       slug: product.slug,
-      price: selected.price,
+      price: unit,
+      listPrice: selected.price,
+      discountPercent: product.discountPercent || 0,
       image: heroImg,
       size: selected.size,
       color: selected.color,
@@ -111,7 +114,21 @@ export default function ProductDetailPage() {
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-neutral-500">{product.category}</p>
           <h1 className="mt-2 font-display text-3xl font-bold text-neutral-900 md:text-4xl">{product.name}</h1>
-          <p className="mt-4 text-lg font-semibold text-neutral-900">{selected ? formatLKR(selected.price) : '—'}</p>
+          {selected && (
+            <div className="mt-4 flex flex-wrap items-baseline gap-3">
+              <p className="text-lg font-semibold text-neutral-900">
+                {formatLKR(selected.salePrice ?? salePrice(selected.price, product))}
+              </p>
+              {Number(product.discountPercent) > 0 && (
+                <>
+                  <p className="text-base text-neutral-400 line-through">{formatLKR(selected.price)}</p>
+                  <span className="rounded bg-rose-600 px-2 py-0.5 text-xs font-semibold uppercase text-white">
+                    {product.discountPercent}% off
+                  </span>
+                </>
+              )}
+            </div>
+          )}
           {selected && (
             <p className="mt-1 text-sm text-neutral-600">
               SKU <span className="font-mono text-neutral-800">{variantSku(selected, product)}</span>
@@ -127,11 +144,16 @@ export default function ProductDetailPage() {
               onChange={(e) => setVariantId(e.target.value)}
               className="w-full max-w-md rounded-xl border border-neutral-200 bg-white px-4 py-3 text-sm font-medium outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900"
             >
-              {product.variants.map((v) => (
-                <option key={v.id} value={String(v.id)}>
-                  {v.size} · {v.color} — {formatLKR(v.price)} · {v.stock > 0 ? `${v.stock} in stock` : 'Out of stock'}
-                </option>
-              ))}
+              {product.variants.map((v) => {
+                const unit = v.salePrice ?? salePrice(v.price, product);
+                return (
+                  <option key={v.id} value={String(v.id)}>
+                    {v.size} · {v.color} — {formatLKR(unit)}
+                    {Number(product.discountPercent) > 0 ? ` (was ${formatLKR(v.price)})` : ''} ·{' '}
+                    {v.stock > 0 ? `${v.stock} in stock` : 'Out of stock'}
+                  </option>
+                );
+              })}
             </select>
           </div>
 

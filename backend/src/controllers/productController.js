@@ -24,9 +24,30 @@ function serializeVariant(v) {
   };
 }
 
+function clampDiscount(n) {
+  const v = Number(n);
+  if (Number.isNaN(v)) return 0;
+  return Math.min(100, Math.max(0, Math.round(v)));
+}
+
+function applyDiscount(price, discountPercent) {
+  const p = Number(price);
+  const d = clampDiscount(discountPercent);
+  if (!d) return p;
+  return Math.round(p * (100 - d)) / 100;
+}
+
 function serializeProduct(p) {
-  const variants = (p.variants || []).map(serializeVariant);
+  const discountPercent = clampDiscount(p.discountPercent ?? 0);
+  const variants = (p.variants || []).map((v) => {
+    const base = serializeVariant(v);
+    return {
+      ...base,
+      salePrice: applyDiscount(base.price, discountPercent),
+    };
+  });
   const prices = variants.map((v) => v.price);
+  const salePrices = variants.map((v) => v.salePrice);
   return {
     id: p.id,
     name: p.name,
@@ -35,11 +56,14 @@ function serializeProduct(p) {
     category: p.category,
     images: p.images,
     isActive: p.isActive,
+    discountPercent,
     createdAt: p.createdAt,
     updatedAt: p.updatedAt,
     variants,
     minPrice: prices.length ? Math.min(...prices) : null,
     maxPrice: prices.length ? Math.max(...prices) : null,
+    minSalePrice: salePrices.length ? Math.min(...salePrices) : null,
+    maxSalePrice: salePrices.length ? Math.max(...salePrices) : null,
   };
 }
 
@@ -168,6 +192,7 @@ export const createProduct = asyncHandler(async (req, res) => {
       category: body.category.trim(),
       images: Array.isArray(body.images) ? body.images : [],
       isActive: body.isActive !== false,
+      discountPercent: clampDiscount(body.discountPercent ?? 0),
       createdById: req.user?.id,
       variants: {
         create: body.variants.map((v) => ({
@@ -215,6 +240,7 @@ export const updateProduct = asyncHandler(async (req, res) => {
   if (body.category) data.category = body.category.trim();
   if (body.images) data.images = body.images;
   if (body.isActive !== undefined) data.isActive = Boolean(body.isActive);
+  if (body.discountPercent !== undefined) data.discountPercent = clampDiscount(body.discountPercent);
 
   const product = await prisma.$transaction(async (tx) => {
     if (body.variants) {

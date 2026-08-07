@@ -29,7 +29,7 @@ export default function AdminDashboardPlaceholderPage() {
       <div>
         <p className="text-xs font-semibold uppercase tracking-widest text-amber-500/90">Admin</p>
         <h1 className="mt-1 text-3xl font-bold text-white">Dashboard</h1>
-        <p className="mt-2 max-w-xl text-slate-400">Inventory and customer orders for ThreadedLK.</p>
+        <p className="mt-2 max-w-xl text-slate-400">Inventory and customer orders for AURVEXA.</p>
       </div>
 
       {error && (

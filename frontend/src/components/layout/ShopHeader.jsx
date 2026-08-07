@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { MagnifyingGlassIcon, ShoppingBagIcon, Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline';
+import AurvexaLogo from '../brand/AurvexaLogo.jsx';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { useCart } from '../../context/CartContext.jsx';
 import { fetchCategories } from '../../services/productService.js';
@@ -56,9 +57,7 @@ export default function ShopHeader() {
             {mobileOpen ? <XMarkIcon className="h-6 w-6" /> : <Bars3Icon className="h-6 w-6" />}
           </button>
 
-          <Link to="/" className="font-display text-xl font-bold tracking-tight text-neutral-900 md:text-2xl">
-            Threaded<span className="text-amber-600">LK</span>
-          </Link>
+          <AurvexaLogo to="/" size="md" />
 
           <form className="mx-auto hidden max-w-xl flex-1 md:flex" onSubmit={onSearch}>
             <div className="relative flex w-full">
