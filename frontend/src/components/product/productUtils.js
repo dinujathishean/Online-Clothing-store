@@ -11,6 +11,18 @@ export function productImage(product, variant) {
   return '';
 }
 
+/** Unique gallery URLs for detail page (variant override first, then product images). */
+export function productGallery(product, variant) {
+  const urls = [];
+  const push = (u) => {
+    const s = String(u || '').trim();
+    if (s && !urls.includes(s)) urls.push(s);
+  };
+  push(variant?.image);
+  for (const u of product?.images || []) push(u);
+  return urls;
+}
+
 export function getDiscountPercent(product) {
   const n = Number(product?.discountPercent);
   if (Number.isNaN(n) || n <= 0) return 0;

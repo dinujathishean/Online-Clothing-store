@@ -171,7 +171,7 @@ export default function AdminProductsPage() {
             urls={form.images}
             onChange={(images) => setForm({ ...form, images })}
             multiple
-            label="Upload tee photos from PC"
+            label="Add photos"
           />
         </div>
 

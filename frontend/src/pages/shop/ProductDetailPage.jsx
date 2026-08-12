@@ -3,7 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import ProductBadges from '../../components/product/ProductBadges.jsx';
 import { fetchProduct } from '../../services/productService.js';
-import { formatLKR, productImage, salePrice, variantSku } from '../../components/product/productUtils.js';
+import { formatLKR, productGallery, productImage, salePrice, variantSku } from '../../components/product/productUtils.js';
 import { normalizeSize, PRESET_SIZES } from '../../constants/sizes.js';
 import { normalizeColor, PRESET_COLORS } from '../../constants/colors.js';
 import { useCart } from '../../context/CartContext.jsx';
@@ -36,6 +36,7 @@ export default function ProductDetailPage() {
   const [product, setProduct] = useState(null);
   const [selectedSize, setSelectedSize] = useState('');
   const [selectedColor, setSelectedColor] = useState('');
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -130,7 +131,19 @@ export default function ProductDetailPage() {
     );
   }, [product, selectedSize, selectedColor]);
 
-  const heroImg = product && selected ? productImage(product, selected) : '';
+  const gallery = useMemo(
+    () => (product ? productGallery(product, selected) : []),
+    [product, selected]
+  );
+
+  useEffect(() => {
+    setActiveImageIndex(0);
+  }, [selected?.id, product?.id, gallery.length]);
+
+  const heroImg =
+    gallery[Math.min(activeImageIndex, Math.max(gallery.length - 1, 0))] ||
+    (product && selected ? productImage(product, selected) : '') ||
+    '';
 
   function pickSize(sz) {
     if (sizeStock[sz] <= 0) return;
@@ -208,11 +221,34 @@ export default function ProductDetailPage() {
         <div className="space-y-4">
           <div className="relative overflow-hidden rounded-2xl border border-neutral-200 bg-neutral-100 aspect-[4/5]">
             {heroImg ? (
-              <img src={heroImg} alt="" className="h-full w-full object-cover" />
+              <img src={heroImg} alt={product.name} className="h-full w-full object-cover" />
             ) : (
               <div className="flex h-full items-center justify-center text-neutral-400">No image</div>
             )}
           </div>
+          {gallery.length > 1 && (
+            <div className="flex flex-wrap gap-2">
+              {gallery.map((url, i) => {
+                const active = i === activeImageIndex;
+                return (
+                  <button
+                    key={`${url}-${i}`}
+                    type="button"
+                    onClick={() => setActiveImageIndex(i)}
+                    className={`h-16 w-16 overflow-hidden rounded-xl border-2 transition ${
+                      active
+                        ? 'border-neutral-900 ring-1 ring-neutral-900'
+                        : 'border-neutral-200 opacity-80 hover:opacity-100'
+                    }`}
+                    aria-label={`View photo ${i + 1}`}
+                    aria-pressed={active}
+                  >
+                    <img src={url} alt="" className="h-full w-full object-cover" />
+                  </button>
+                );
+              })}
+            </div>
+          )}
           <ProductBadges product={product} />
         </div>
 

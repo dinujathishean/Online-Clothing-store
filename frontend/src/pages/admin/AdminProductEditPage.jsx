@@ -289,7 +289,7 @@ export default function AdminProductEditPage() {
           </label>
           <div className="space-y-2 md:col-span-2">
             <span className="text-xs font-medium text-slate-400">Gallery images</span>
-            <ImageUploadField urls={images} onChange={setImages} multiple label="Upload tee photos from PC" />
+            <ImageUploadField urls={images} onChange={setImages} multiple label="Add photos" />
           </div>
         </div>
 

@@ -235,7 +235,9 @@ export const createProduct = asyncHandler(async (req, res) => {
       slug,
       description: body.description ?? '',
       category: body.category.trim(),
-      images: Array.isArray(body.images) ? body.images : [],
+      images: Array.isArray(body.images)
+        ? body.images.map((u) => String(u || '').trim()).filter(Boolean)
+        : [],
       isActive: body.isActive !== false,
       discountPercent: clampDiscount(body.discountPercent ?? 0),
       createdById: req.user?.id,
@@ -276,7 +278,7 @@ export const updateProduct = asyncHandler(async (req, res) => {
   else if (body.name) data.slug = toSlug(body.name);
   if (body.description !== undefined) data.description = body.description;
   if (body.category) data.category = body.category.trim();
-  if (body.images) data.images = body.images;
+  if (Array.isArray(body.images)) data.images = body.images.map((u) => String(u || '').trim()).filter(Boolean);
   if (body.isActive !== undefined) data.isActive = Boolean(body.isActive);
   if (body.discountPercent !== undefined) data.discountPercent = clampDiscount(body.discountPercent);
 
