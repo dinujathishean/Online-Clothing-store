@@ -1,5 +1,7 @@
 import { validationResult } from 'express-validator';
 import { Prisma } from '@prisma/client';
+import { availableColorsFromVariants, normalizeColor } from '../constants/colors.js';
+import { availableSizesFromVariants, normalizeSize } from '../constants/sizes.js';
 import { prisma } from '../lib/prisma.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { toSlug } from '../utils/slug.js';
@@ -15,12 +17,23 @@ function parseList(param) {
 function serializeVariant(v) {
   return {
     id: v.id,
-    size: v.size,
-    color: v.color,
+    size: normalizeSize(v.size) || v.size,
+    color: normalizeColor(v.color) || v.color,
     sku: v.sku,
     price: Number(v.price),
     stock: v.stock,
     image: v.image,
+  };
+}
+
+function mapVariantCreate(v) {
+  return {
+    size: normalizeSize(v.size) || String(v.size || '').trim(),
+    color: normalizeColor(v.color) || String(v.color || '').trim(),
+    sku: String(v.sku || '').trim(),
+    price: new Prisma.Decimal(v.price),
+    stock: Number(v.stock),
+    image: String(v.image || '').trim(),
   };
 }
 
@@ -48,6 +61,15 @@ function serializeProduct(p) {
   });
   const prices = variants.map((v) => v.price);
   const salePrices = variants.map((v) => v.salePrice);
+  const availableSizes = availableSizesFromVariants(variants);
+  const inStockSizes = availableSizes.filter((sz) =>
+    variants.some((v) => normalizeSize(v.size) === sz && Number(v.stock) > 0)
+  );
+  const availableColors = availableColorsFromVariants(variants);
+  const inStockColors = availableColors.filter((c) =>
+    variants.some((v) => normalizeColor(v.color) === c && Number(v.stock) > 0)
+  );
+
   return {
     id: p.id,
     name: p.name,
@@ -60,6 +82,14 @@ function serializeProduct(p) {
     createdAt: p.createdAt,
     updatedAt: p.updatedAt,
     variants,
+    /** Sizes configured by admin (from variants). */
+    availableSizes,
+    /** Subset of availableSizes that currently have stock. */
+    inStockSizes,
+    /** Colours configured by admin (from variants). */
+    availableColors,
+    /** Subset of availableColors that currently have stock. */
+    inStockColors,
     minPrice: prices.length ? Math.min(...prices) : null,
     maxPrice: prices.length ? Math.max(...prices) : null,
     minSalePrice: salePrices.length ? Math.min(...salePrices) : null,
@@ -106,14 +136,29 @@ export const listProducts = asyncHandler(async (req, res) => {
     clauses.push({ category: { equals: String(category), mode: 'insensitive' } });
   }
 
-  const sizeList = parseList(sizes);
-  const colorList = parseList(colors);
+  const sizeList = parseList(sizes).map(normalizeSize).filter(Boolean);
+  const colorList = parseList(colors).map(normalizeColor).filter(Boolean);
   const min = minPrice !== undefined && minPrice !== '' ? Number(minPrice) : null;
   const max = maxPrice !== undefined && maxPrice !== '' ? Number(maxPrice) : null;
 
   const variantWhere = {};
-  if (sizeList.length) variantWhere.size = { in: sizeList };
-  if (colorList.length) variantWhere.color = { in: colorList };
+  if (sizeList.length) {
+    // Match normalized (uppercase) sizes; also accept legacy mixed-case rows.
+    variantWhere.AND = variantWhere.AND || [];
+    variantWhere.AND.push({
+      OR: sizeList.map((sz) => ({
+        size: { equals: sz, mode: 'insensitive' },
+      })),
+    });
+  }
+  if (colorList.length) {
+    variantWhere.AND = variantWhere.AND || [];
+    variantWhere.AND.push({
+      OR: colorList.map((c) => ({
+        color: { equals: c, mode: 'insensitive' },
+      })),
+    });
+  }
   if (min !== null && !Number.isNaN(min)) {
     variantWhere.price = { ...(variantWhere.price || {}), gte: new Prisma.Decimal(min) };
   }
@@ -195,14 +240,7 @@ export const createProduct = asyncHandler(async (req, res) => {
       discountPercent: clampDiscount(body.discountPercent ?? 0),
       createdById: req.user?.id,
       variants: {
-        create: body.variants.map((v) => ({
-          size: v.size.trim(),
-          color: v.color.trim(),
-          sku: (v.sku || '').trim(),
-          price: new Prisma.Decimal(v.price),
-          stock: Number(v.stock),
-          image: (v.image || '').trim(),
-        })),
+        create: body.variants.map(mapVariantCreate),
       },
     },
     include: { variants: true },
@@ -248,12 +286,7 @@ export const updateProduct = asyncHandler(async (req, res) => {
       await tx.productVariant.createMany({
         data: body.variants.map((v) => ({
           productId: id,
-          size: v.size.trim(),
-          color: v.color.trim(),
-          sku: (v.sku || '').trim(),
-          price: new Prisma.Decimal(v.price),
-          stock: Number(v.stock),
-          image: (v.image || '').trim(),
+          ...mapVariantCreate(v),
         })),
       });
     }

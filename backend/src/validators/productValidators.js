@@ -1,9 +1,21 @@
 import { body, param } from 'express-validator';
 
+const sizeField = body('variants.*.size')
+  .trim()
+  .notEmpty()
+  .isLength({ max: 16 })
+  .withMessage('Size is required (e.g. S, M, L, XL)');
+
+const colorField = body('variants.*.color')
+  .trim()
+  .notEmpty()
+  .isLength({ max: 48 })
+  .withMessage('Colour is required (e.g. Black, Navy)');
+
 const variantRules = [
   body('variants').isArray({ min: 1 }),
-  body('variants.*.size').trim().notEmpty(),
-  body('variants.*.color').trim().notEmpty(),
+  sizeField,
+  colorField,
   body('variants.*.price').isFloat({ min: 0 }),
   body('variants.*.stock').isInt({ min: 0 }),
   body('variants.*.sku').optional().isString(),
@@ -31,8 +43,8 @@ export const updateProductRules = [
   body('isActive').optional().isBoolean(),
   body('discountPercent').optional().isInt({ min: 0, max: 100 }),
   body('variants').optional().isArray({ min: 1 }),
-  body('variants.*.size').optional().trim().notEmpty(),
-  body('variants.*.color').optional().trim().notEmpty(),
+  body('variants.*.size').optional().trim().notEmpty().isLength({ max: 16 }),
+  body('variants.*.color').optional().trim().notEmpty().isLength({ max: 48 }),
   body('variants.*.price').optional().isFloat({ min: 0 }),
   body('variants.*.stock').optional().isInt({ min: 0 }),
 ];

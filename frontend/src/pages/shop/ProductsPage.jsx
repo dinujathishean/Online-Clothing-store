@@ -2,8 +2,10 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import ProductCard from '../../components/product/ProductCard.jsx';
 import { fetchCategories, fetchProducts } from '../../services/productService.js';
+import { PRESET_SIZES } from '../../constants/sizes.js';
+import { normalizeColor } from '../../constants/colors.js';
 
-const SIZE_OPTIONS = ['S', 'M', 'L', 'XL', 'XXL'];
+const SIZE_OPTIONS = PRESET_SIZES;
 
 export default function ProductsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -50,9 +52,17 @@ export default function ProductsPage() {
 
       const colors = new Set();
       (res.products ?? []).forEach((p) => {
-        (p.variants || []).forEach((v) => {
-          if (v.color) colors.add(v.color);
-        });
+        if (Array.isArray(p.availableColors) && p.availableColors.length) {
+          p.availableColors.forEach((c) => {
+            const n = normalizeColor(c);
+            if (n) colors.add(n);
+          });
+        } else {
+          (p.variants || []).forEach((v) => {
+            const n = normalizeColor(v.color);
+            if (n) colors.add(n);
+          });
+        }
       });
       setColorOptions([...colors].sort((a, b) => a.localeCompare(b)));
     } catch (e) {

@@ -4,6 +4,10 @@ import toast from 'react-hot-toast';
 import { api } from '../../services/api.js';
 import { useAuth } from '../../context/AuthContext.jsx';
 import ImageUploadField from '../../components/admin/ImageUploadField.jsx';
+import SizeChipSelector from '../../components/admin/SizeChipSelector.jsx';
+import ColorChipSelector from '../../components/admin/ColorChipSelector.jsx';
+import { normalizeSize } from '../../constants/sizes.js';
+import { normalizeColor } from '../../constants/colors.js';
 
 export default function AdminProductsPage() {
   const { isAdmin, authReady } = useAuth();
@@ -17,8 +21,8 @@ export default function AdminProductsPage() {
     discountPercent: 0,
     price: 2490,
     stock: 10,
-    size: 'M',
-    color: 'Black',
+    sizes: ['M'],
+    colors: ['Black'],
     sku: '',
     variantImage: '',
   });
@@ -46,7 +50,36 @@ export default function AdminProductsPage() {
 
   async function addProduct(e) {
     e.preventDefault();
+    const sizes = form.sizes.map(normalizeSize).filter(Boolean);
+    const colors = form.colors.map(normalizeColor).filter(Boolean);
+    if (sizes.length === 0) {
+      toast.error('Select at least one available size.');
+      return;
+    }
+    if (colors.length === 0) {
+      toast.error('Select at least one available colour.');
+      return;
+    }
     try {
+      const price = Number(form.price);
+      const stock = Number(form.stock);
+      const image = String(form.variantImage || '').trim();
+      const skuBase = String(form.sku || '').trim();
+
+      const variants = [];
+      for (const size of sizes) {
+        for (const color of colors) {
+          variants.push({
+            size,
+            color,
+            sku: skuBase ? `${skuBase}-${size}-${color.replace(/\s+/g, '')}` : '',
+            price,
+            stock,
+            image,
+          });
+        }
+      }
+
       await api('/api/admin/products', {
         method: 'POST',
         body: JSON.stringify({
@@ -55,16 +88,7 @@ export default function AdminProductsPage() {
           description: form.description.trim(),
           images: form.images,
           discountPercent: Math.min(100, Math.max(0, Number(form.discountPercent) || 0)),
-          variants: [
-            {
-              size: String(form.size).trim(),
-              color: String(form.color).trim(),
-              sku: String(form.sku || '').trim(),
-              price: Number(form.price),
-              stock: Number(form.stock),
-              image: String(form.variantImage || '').trim(),
-            },
-          ],
+          variants,
         }),
       });
       toast.success('Product added');
@@ -76,8 +100,8 @@ export default function AdminProductsPage() {
         discountPercent: 0,
         price: 2490,
         stock: 10,
-        size: 'M',
-        color: 'Black',
+        sizes: ['M'],
+        colors: ['Black'],
         sku: '',
         variantImage: '',
       });
@@ -104,7 +128,9 @@ export default function AdminProductsPage() {
         <div>
           <p className="text-xs font-semibold uppercase tracking-widest text-amber-500/90">Admin</p>
           <h1 className="mt-1 text-2xl font-bold text-white">Product management</h1>
-          <p className="mt-2 text-sm text-slate-400">Upload tee photos from your PC, then set size, colour, price and stock.</p>
+          <p className="mt-2 text-sm text-slate-400">
+            Pick available sizes and colours, upload tee photos, then set shared price and stock. Fine-tune on the edit page.
+          </p>
         </div>
         <Link to="/admin" className="text-sm text-amber-400 hover:text-amber-300">
           ← Dashboard
@@ -161,11 +187,47 @@ export default function AdminProductsPage() {
             onChange={(e) => setForm({ ...form, discountPercent: e.target.value })}
           />
         </label>
-        <input className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white" placeholder="Size" value={form.size} onChange={(e) => setForm({ ...form, size: e.target.value })} />
-        <input className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white" placeholder="Colour" value={form.color} onChange={(e) => setForm({ ...form, color: e.target.value })} />
-        <input className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white" placeholder="SKU (optional)" value={form.sku} onChange={(e) => setForm({ ...form, sku: e.target.value })} />
-        <input type="number" className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white" placeholder="Price (LKR)" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} />
-        <input type="number" className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white" placeholder="Stock" value={form.stock} onChange={(e) => setForm({ ...form, stock: e.target.value })} />
+
+        <div className="rounded-lg border border-slate-800 bg-slate-950/50 p-3 md:col-span-2">
+          <SizeChipSelector
+            selected={form.sizes}
+            onChange={(sizes) => setForm({ ...form, sizes })}
+            label="Available sizes"
+          />
+        </div>
+
+        <div className="rounded-lg border border-slate-800 bg-slate-950/50 p-3 md:col-span-2">
+          <ColorChipSelector
+            selected={form.colors}
+            onChange={(colors) => setForm({ ...form, colors })}
+            label="Available colours"
+          />
+          <p className="mt-2 text-xs text-slate-500">
+            Creates one variant per size × colour (shared price &amp; stock below). Fine-tune on the edit page.
+          </p>
+        </div>
+
+        <input
+          className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white"
+          placeholder="SKU prefix (optional)"
+          value={form.sku}
+          onChange={(e) => setForm({ ...form, sku: e.target.value })}
+        />
+        <div className="hidden md:block" aria-hidden />
+        <input
+          type="number"
+          className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white"
+          placeholder="Price (LKR)"
+          value={form.price}
+          onChange={(e) => setForm({ ...form, price: e.target.value })}
+        />
+        <input
+          type="number"
+          className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white"
+          placeholder="Stock per variant"
+          value={form.stock}
+          onChange={(e) => setForm({ ...form, stock: e.target.value })}
+        />
 
         <div className="space-y-2 rounded-lg border border-slate-800 bg-slate-950/50 p-3 md:col-span-2">
           <p className="text-xs font-medium uppercase tracking-wider text-slate-500">Variant image (optional)</p>
@@ -183,10 +245,12 @@ export default function AdminProductsPage() {
       </form>
 
       <div className="overflow-x-auto rounded-xl border border-slate-800">
-        <table className="w-full min-w-[640px] text-left text-sm text-slate-300">
+        <table className="w-full min-w-[720px] text-left text-sm text-slate-300">
           <thead className="border-b border-slate-800 bg-slate-900/80 text-xs uppercase tracking-wider text-slate-500">
             <tr>
               <th className="px-4 py-3">Product</th>
+              <th className="px-4 py-3">Sizes</th>
+              <th className="px-4 py-3">Colours</th>
               <th className="px-4 py-3">Category</th>
               <th className="px-4 py-3">Discount</th>
               <th className="px-4 py-3">Status</th>
@@ -197,6 +261,12 @@ export default function AdminProductsPage() {
             {products.map((p) => (
               <tr key={p.id} className="border-b border-slate-800/80 hover:bg-slate-900/40">
                 <td className="px-4 py-3 font-medium text-white">{p.name}</td>
+                <td className="px-4 py-3 text-slate-400">
+                  {(p.availableSizes || []).length ? (p.availableSizes || []).join(', ') : '—'}
+                </td>
+                <td className="px-4 py-3 text-slate-400">
+                  {(p.availableColors || []).length ? (p.availableColors || []).join(', ') : '—'}
+                </td>
                 <td className="px-4 py-3">{p.category}</td>
                 <td className="px-4 py-3">
                   {Number(p.discountPercent) > 0 ? (
@@ -205,7 +275,9 @@ export default function AdminProductsPage() {
                     <span className="text-slate-600">—</span>
                   )}
                 </td>
-                <td className="px-4 py-3">{p.isActive ? <span className="text-emerald-400">Active</span> : <span className="text-slate-500">Hidden</span>}</td>
+                <td className="px-4 py-3">
+                  {p.isActive ? <span className="text-emerald-400">Active</span> : <span className="text-slate-500">Hidden</span>}
+                </td>
                 <td className="px-4 py-3 text-right">
                   <Link to={`/admin/products/${p.id}/edit`} className="mr-4 font-medium text-amber-400 hover:text-amber-300">
                     Edit
