@@ -27,9 +27,12 @@ export default function ProductsPage() {
   const selectedSizes = useMemo(() => sizesParam.split(',').filter(Boolean), [sizesParam]);
   const selectedColors = useMemo(() => colorsParam.split(',').filter(Boolean), [colorsParam]);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError('');
+  const load = useCallback(async (opts = {}) => {
+    const quiet = Boolean(opts.quiet);
+    if (!quiet) {
+      setLoading(true);
+      setError('');
+    }
     try {
       const params = {
         limit: 48,
@@ -49,6 +52,7 @@ export default function ProductsPage() {
 
       setProducts(list);
       setCategories(cats.categories ?? []);
+      setError('');
 
       const colors = new Set();
       (res.products ?? []).forEach((p) => {
@@ -66,15 +70,30 @@ export default function ProductsPage() {
       });
       setColorOptions([...colors].sort((a, b) => a.localeCompare(b)));
     } catch (e) {
-      setError(e.message || 'Failed to load products');
-      setProducts([]);
+      if (!quiet) {
+        setError(e.message || 'Failed to load products');
+        setProducts([]);
+      }
     } finally {
-      setLoading(false);
+      if (!quiet) setLoading(false);
     }
   }, [q, category, sort, selectedSizes, selectedColors, minPrice, maxPrice]);
 
   useEffect(() => {
     load();
+  }, [load]);
+
+  // Soft refresh when returning to the tab so OOS updates after purchases.
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') load({ quiet: true });
+    };
+    window.addEventListener('focus', onVisible);
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      window.removeEventListener('focus', onVisible);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
   }, [load]);
 
   useEffect(() => {

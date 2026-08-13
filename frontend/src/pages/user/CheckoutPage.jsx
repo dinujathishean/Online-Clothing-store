@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { api } from '../../services/api.js';
 import { useCart } from '../../context/CartContext.jsx';
 import { formatLKR } from '../../components/product/productUtils.js';
+import { refreshCartStock } from '../../services/cartStock.js';
 
 const fields = [
   { key: 'line1', label: 'Street address', placeholder: '237/9/A/5/, Lane …' },
@@ -14,14 +15,45 @@ const fields = [
 
 export default function CheckoutPage() {
   const nav = useNavigate();
-  const { cart, clear } = useCart();
+  const { cart, clear, refreshCart } = useCart();
   const items = cart?.items || [];
 
   const [form, setForm] = useState({ line1: '', city: '', postalCode: '', country: 'Sri Lanka' });
   const [loading, setLoading] = useState(false);
+  const [syncing, setSyncing] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (!items.length) {
+        setSyncing(false);
+        return;
+      }
+      setSyncing(true);
+      try {
+        const { outOfStockCount, adjusted } = await refreshCartStock();
+        if (cancelled) return;
+        refreshCart();
+        if (outOfStockCount > 0) {
+          toast.error('Some items are out of stock — return to your bag to remove them.');
+        } else if (adjusted) {
+          toast('Quantities updated to match stock.', { icon: 'ℹ️' });
+        }
+      } catch {
+        /* checkout still validates */
+      } finally {
+        if (!cancelled) setSyncing(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const subtotal = items.reduce((sum, it) => sum + (Number(it.snapshot?.price) || 0) * (it.quantity || 0), 0);
   const shippingFee = 0;
+  const hasOutOfStock = items.some((it) => (Number(it.snapshot?.stock) || 0) <= 0);
 
   async function submit(e) {
     e.preventDefault();
@@ -29,15 +61,28 @@ export default function CheckoutPage() {
       toast.error('Your bag is empty.');
       return;
     }
+    if (hasOutOfStock) {
+      toast.error('Remove out-of-stock items before placing your order.');
+      return;
+    }
 
     setLoading(true);
     try {
+      // Re-check live stock right before placing the order.
+      const { outOfStockCount, cart: latest } = await refreshCartStock();
+      refreshCart();
+      if (outOfStockCount > 0 || (latest.items || []).some((it) => (Number(it.snapshot?.stock) || 0) < (it.quantity || 0))) {
+        toast.error('Stock changed — update your bag and try again.');
+        setLoading(false);
+        return;
+      }
+
       const r = await api('/api/orders/checkout', {
         method: 'POST',
         body: JSON.stringify({
           shippingAddress: form,
           shippingFee,
-          items: items.map((it) => ({
+          items: (latest.items || items).map((it) => ({
             productId: it.productId,
             variantId: it.variantId,
             quantity: it.quantity,
@@ -70,6 +115,15 @@ export default function CheckoutPage() {
         <div className="mt-10 grid gap-10 lg:grid-cols-[1fr_380px]">
           <form onSubmit={submit} className="space-y-6 rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm">
             <h2 className="text-lg font-semibold text-neutral-900">Shipping address</h2>
+            {hasOutOfStock && (
+              <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                One or more items are out of stock.{' '}
+                <Link to="/cart" className="font-semibold underline">
+                  Return to bag
+                </Link>{' '}
+                to remove them before ordering.
+              </div>
+            )}
             <div className="space-y-4">
               {fields.map(({ key, label, placeholder }) => (
                 <label key={key} className="block">
@@ -86,27 +140,33 @@ export default function CheckoutPage() {
             </div>
             <button
               type="submit"
-              disabled={loading}
-              className="w-full rounded-full bg-amber-500 py-3 text-sm font-semibold text-neutral-900 transition hover:bg-amber-400 disabled:opacity-60"
+              disabled={loading || syncing || hasOutOfStock}
+              className="w-full rounded-full bg-amber-500 py-3 text-sm font-semibold text-neutral-900 transition hover:bg-amber-400 disabled:cursor-not-allowed disabled:bg-neutral-300 disabled:text-neutral-500"
             >
-              {loading ? 'Placing order…' : 'Place order'}
+              {loading ? 'Placing order…' : hasOutOfStock ? 'Out of stock items in bag' : 'Place order'}
             </button>
           </form>
 
           <aside className="h-fit rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm">
             <h2 className="text-lg font-semibold text-neutral-900">Order summary</h2>
             <ul className="mt-4 space-y-3 border-b border-neutral-100 pb-4 text-sm">
-              {items.map((it) => (
-                <li key={`${it.productId}-${it.variantId}`} className="flex justify-between gap-3 text-neutral-700">
-                  <span className="min-w-0">
-                    <span className="font-medium text-neutral-900">{it.snapshot?.name}</span>
-                    <span className="block text-xs text-neutral-500">
-                      {it.snapshot?.size} · {it.snapshot?.color} × {it.quantity}
+              {items.map((it) => {
+                const oos = (Number(it.snapshot?.stock) || 0) <= 0;
+                return (
+                  <li key={`${it.productId}-${it.variantId}`} className="flex justify-between gap-3 text-neutral-700">
+                    <span className="min-w-0">
+                      <span className="font-medium text-neutral-900">{it.snapshot?.name}</span>
+                      <span className="block text-xs text-neutral-500">
+                        {it.snapshot?.size} · {it.snapshot?.color} × {it.quantity}
+                        {oos ? ' · Out of stock' : ''}
+                      </span>
                     </span>
-                  </span>
-                  <span className="shrink-0 font-medium">{formatLKR((Number(it.snapshot?.price) || 0) * (it.quantity || 0))}</span>
-                </li>
-              ))}
+                    <span className={`shrink-0 font-medium ${oos ? 'text-amber-800' : ''}`}>
+                      {oos ? '—' : formatLKR((Number(it.snapshot?.price) || 0) * (it.quantity || 0))}
+                    </span>
+                  </li>
+                );
+              })}
             </ul>
             <div className="mt-4 flex justify-between text-sm text-neutral-600">
               <span>Shipping</span>

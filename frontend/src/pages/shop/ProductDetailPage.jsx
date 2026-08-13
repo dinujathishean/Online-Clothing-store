@@ -2,8 +2,9 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import ProductBadges from '../../components/product/ProductBadges.jsx';
+import SizeChartModal from '../../components/product/SizeChartModal.jsx';
 import { fetchProduct } from '../../services/productService.js';
-import { formatLKR, productGallery, productImage, salePrice, variantSku } from '../../components/product/productUtils.js';
+import { formatLKR, isProductOutOfStock, productGallery, productImage, salePrice, variantSku } from '../../components/product/productUtils.js';
 import { normalizeSize, PRESET_SIZES } from '../../constants/sizes.js';
 import { normalizeColor, PRESET_COLORS } from '../../constants/colors.js';
 import { useCart } from '../../context/CartContext.jsx';
@@ -39,6 +40,7 @@ export default function ProductDetailPage() {
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [sizeChartOpen, setSizeChartOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -145,6 +147,9 @@ export default function ProductDetailPage() {
     (product && selected ? productImage(product, selected) : '') ||
     '';
 
+  const productOutOfStock = product ? isProductOutOfStock(product) : false;
+  const selectedOutOfStock = productOutOfStock || !selected || (Number(selected.stock) || 0) <= 0;
+
   function pickSize(sz) {
     if (sizeStock[sz] <= 0) return;
     setSelectedSize(sz);
@@ -221,9 +226,18 @@ export default function ProductDetailPage() {
         <div className="space-y-4">
           <div className="relative overflow-hidden rounded-2xl border border-neutral-200 bg-neutral-100 aspect-[4/5]">
             {heroImg ? (
-              <img src={heroImg} alt={product.name} className="h-full w-full object-cover" />
+              <img
+                src={heroImg}
+                alt={product.name}
+                className={`h-full w-full object-cover ${productOutOfStock ? 'opacity-55 grayscale-[30%]' : ''}`}
+              />
             ) : (
               <div className="flex h-full items-center justify-center text-neutral-400">No image</div>
+            )}
+            {productOutOfStock && (
+              <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-neutral-950/90 px-4 py-3 text-center">
+                <span className="text-xs font-bold uppercase tracking-[0.14em] text-white">Out of stock</span>
+              </div>
             )}
           </div>
           {gallery.length > 1 && (
@@ -278,9 +292,31 @@ export default function ProductDetailPage() {
 
           <p className="mt-6 leading-relaxed text-neutral-600">{product.description || 'Premium cotton tee — see size guide on the label.'}</p>
 
+          {productOutOfStock && (
+            <div className="mt-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+              <p className="font-semibold">Out of stock</p>
+              <p className="mt-1 text-amber-900/80">
+                Every size and colour is currently unavailable. Check back soon or{' '}
+                <Link to="/products" className="font-semibold underline decoration-amber-700/40 underline-offset-2">
+                  browse other tees
+                </Link>
+                .
+              </p>
+            </div>
+          )}
+
           <div className="mt-8 space-y-6">
             <div>
-              <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-neutral-500">Size</p>
+              <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                <p className="text-xs font-semibold uppercase tracking-wider text-neutral-500">Size</p>
+                <button
+                  type="button"
+                  onClick={() => setSizeChartOpen(true)}
+                  className="text-sm font-semibold text-amber-800 underline decoration-amber-700/40 underline-offset-4 transition hover:text-amber-950 hover:decoration-amber-800"
+                >
+                  Size chart
+                </button>
+              </div>
               <div className="flex flex-wrap gap-2">
                 {sizeOptions.map((sz) => {
                   const stock = sizeStock[sz] || 0;
@@ -344,9 +380,9 @@ export default function ProductDetailPage() {
               {colorOptions.length === 0 && selectedSize && (
                 <p className="text-sm text-neutral-500">No colours configured for this size.</p>
               )}
-              {selected && colorOptions.length > 0 && (
-                <p className="mt-2 text-sm text-neutral-500">
-                  {selected.stock > 0 ? `${selected.stock} in stock` : 'Out of stock'}
+              {selected && colorOptions.length > 0 && !productOutOfStock && (
+                <p className={`mt-2 text-sm ${selectedOutOfStock ? 'font-medium text-amber-800' : 'text-neutral-500'}`}>
+                  {selectedOutOfStock ? 'Out of stock' : `${selected.stock} in stock`}
                 </p>
               )}
             </div>
@@ -355,11 +391,11 @@ export default function ProductDetailPage() {
           <div className="mt-10 flex flex-wrap gap-4">
             <button
               type="button"
-              disabled={!selected || selected.stock <= 0}
+              disabled={selectedOutOfStock}
               onClick={handleAdd}
-              className="rounded-full bg-neutral-900 px-10 py-3 text-sm font-semibold text-white transition hover:bg-neutral-800 disabled:cursor-not-allowed disabled:bg-neutral-300"
+              className="rounded-full bg-neutral-900 px-10 py-3 text-sm font-semibold text-white transition hover:bg-neutral-800 disabled:cursor-not-allowed disabled:bg-neutral-300 disabled:text-neutral-500"
             >
-              Add to bag
+              {selectedOutOfStock ? 'Out of stock' : 'Add to bag'}
             </button>
             <Link
               to="/products"
@@ -381,6 +417,8 @@ export default function ProductDetailPage() {
           </dl>
         </div>
       </div>
+
+      <SizeChartModal open={sizeChartOpen} onClose={() => setSizeChartOpen(false)} />
     </div>
   );
 }

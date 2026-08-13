@@ -80,18 +80,34 @@ export default function HomePage() {
 
   useEffect(() => {
     let cancelled = false;
-    fetchProducts({ limit: 48 })
-      .then((r) => {
-        if (!cancelled) setProducts(r.products ?? []);
-      })
-      .catch((e) => {
+
+    async function load(showSpinner = true) {
+      if (showSpinner) setLoading(true);
+      try {
+        const r = await fetchProducts({ limit: 48 });
+        if (!cancelled) {
+          setProducts(r.products ?? []);
+          setError('');
+        }
+      } catch (e) {
         if (!cancelled) setError(e.message || 'Could not load catalog');
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
+      } finally {
+        if (!cancelled && showSpinner) setLoading(false);
+      }
+    }
+
+    load(true);
+
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') load(false);
+    };
+    window.addEventListener('focus', onVisible);
+    document.addEventListener('visibilitychange', onVisible);
+
     return () => {
       cancelled = true;
+      window.removeEventListener('focus', onVisible);
+      document.removeEventListener('visibilitychange', onVisible);
     };
   }, []);
 

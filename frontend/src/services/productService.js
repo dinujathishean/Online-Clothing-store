@@ -7,14 +7,15 @@ export async function fetchProducts(params = {}) {
     if (v !== undefined && v !== '' && v !== null) q.set(k, String(v));
   });
   const qs = q.toString();
-  return api(`/api/products${qs ? `?${qs}` : ''}`);
+  // Always revalidate — stock/OOS must not come from a stale HTTP cache.
+  return api(`/api/products${qs ? `?${qs}` : ''}`, { cache: 'no-store' });
 }
 
 export async function fetchProduct(idOrSlug) {
   const id = encodeURIComponent(idOrSlug);
-  return api(`/api/products/${id}`);
+  return api(`/api/products/${id}`, { cache: 'no-store' });
 }
 
 export async function fetchCategories() {
-  return api('/api/categories');
+  return api('/api/categories', { cache: 'no-store' });
 }

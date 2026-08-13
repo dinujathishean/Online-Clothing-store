@@ -27,6 +27,12 @@ app.use(
 app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 app.use(express.json({ limit: '2mb' }));
 
+// Catalog/order data is live stock — never let browsers cache JSON as fresh forever.
+app.use('/api', (_req, res, next) => {
+  res.set('Cache-Control', 'no-store');
+  next();
+});
+
 app.use('/uploads', express.static(uploadsDir));
 
 app.get('/api/health', (req, res) => {

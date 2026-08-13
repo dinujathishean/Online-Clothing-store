@@ -89,18 +89,21 @@ export const checkout = asyncHandler(async (req, res) => {
 
   const fee = new Prisma.Decimal(Number(shippingFee) || 0);
 
-  const normalized = items.map((raw) => ({
-    productId: Number(raw.productId),
-    variantId: Number(raw.variantId),
-    quantity: Math.max(1, Math.floor(Number(raw.quantity) || 0)),
-  }));
-
-  for (const row of normalized) {
-    if (!Number.isInteger(row.productId) || !Number.isInteger(row.variantId) || row.quantity < 1) {
+  const merged = new Map();
+  for (const raw of items) {
+    const productId = Number(raw.productId);
+    const variantId = Number(raw.variantId);
+    const quantity = Math.max(0, Math.floor(Number(raw.quantity) || 0));
+    if (!Number.isInteger(productId) || !Number.isInteger(variantId) || quantity < 1) {
       res.status(400).json({ message: 'Invalid cart line' });
       return;
     }
+    const key = `${productId}:${variantId}`;
+    const prev = merged.get(key);
+    if (prev) prev.quantity += quantity;
+    else merged.set(key, { productId, variantId, quantity });
   }
+  const normalized = [...merged.values()];
 
   try {
     const order = await prisma.$transaction(async (tx) => {
@@ -122,7 +125,11 @@ export const checkout = asyncHandler(async (req, res) => {
         }
 
         if (variant.stock < row.quantity) {
-          throw Object.assign(new Error(`Insufficient stock for ${variant.product.name} (${variant.size} / ${variant.color})`), {
+          const label = `${variant.product.name} (${variant.size} / ${variant.color})`;
+          if (variant.stock <= 0) {
+            throw Object.assign(new Error(`${label} is out of stock`), { status: 400 });
+          }
+          throw Object.assign(new Error(`Insufficient stock for ${label} — only ${variant.stock} left`), {
             status: 400,
           });
         }
@@ -149,6 +156,7 @@ export const checkout = asyncHandler(async (req, res) => {
 
       const total = subtotal.add(fee);
 
+      // Atomic decrement: stock: { gte } prevents going negative under concurrency.
       const updated = await Promise.all(
         normalized.map((row) =>
           tx.productVariant.updateMany({

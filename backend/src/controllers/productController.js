@@ -69,6 +69,8 @@ function serializeProduct(p) {
   const inStockColors = availableColors.filter((c) =>
     variants.some((v) => normalizeColor(v.color) === c && Number(v.stock) > 0)
   );
+  const totalStock = variants.reduce((sum, v) => sum + (Number(v.stock) || 0), 0);
+  const inStock = totalStock > 0;
 
   return {
     id: p.id,
@@ -90,6 +92,10 @@ function serializeProduct(p) {
     availableColors,
     /** Subset of availableColors that currently have stock. */
     inStockColors,
+    /** Sum of live variant stock (0 = out of stock). */
+    totalStock,
+    /** True when any variant has stock > 0. */
+    inStock,
     minPrice: prices.length ? Math.min(...prices) : null,
     maxPrice: prices.length ? Math.max(...prices) : null,
     minSalePrice: salePrices.length ? Math.min(...salePrices) : null,

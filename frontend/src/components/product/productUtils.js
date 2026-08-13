@@ -1,7 +1,20 @@
 /** @param {object} product – API product with variants, createdAt */
 export function sumStock(product) {
+  if (typeof product?.totalStock === 'number' && !Number.isNaN(product.totalStock)) {
+    return Math.max(0, product.totalStock);
+  }
   if (!product?.variants?.length) return 0;
   return product.variants.reduce((s, v) => s + (Number(v.stock) || 0), 0);
+}
+
+/** Product-level OOS: no variant has stock > 0. */
+export function isProductOutOfStock(product) {
+  if (!product) return true;
+  if (typeof product.inStock === 'boolean') return !product.inStock;
+  if (Array.isArray(product.inStockSizes) && Array.isArray(product.variants) && product.variants.length) {
+    return product.inStockSizes.length === 0;
+  }
+  return sumStock(product) <= 0;
 }
 
 export function productImage(product, variant) {
@@ -52,6 +65,11 @@ export function getProductBadges(product) {
   const badges = [];
   if (!product) return badges;
 
+  const oos = isProductOutOfStock(product);
+  if (oos) {
+    badges.push({ type: 'oos', label: 'Out of stock' });
+  }
+
   const discount = getDiscountPercent(product);
   if (discount > 0) badges.push({ type: 'sale', label: `${discount}% Off` });
 
@@ -61,11 +79,11 @@ export function getProductBadges(product) {
     if (days <= 14) badges.push({ type: 'new', label: 'New' });
   }
 
-  const stock = sumStock(product);
-  if (stock <= 0) badges.push({ type: 'oos', label: 'Out of Stock' });
-  else {
-    badges.push({ type: 'stock', label: 'In Stock' });
-    if (stock < 10) badges.push({ type: 'hot', label: 'Selling fast' });
+  if (!oos) {
+    const stock = sumStock(product);
+    badges.push({ type: 'stock', label: 'In stock' });
+    if (stock > 0 && stock <= 5) badges.push({ type: 'hot', label: `Only ${stock} left` });
+    else if (stock < 10) badges.push({ type: 'hot', label: 'Selling fast' });
     else if (stock > 40) badges.push({ type: 'hot', label: 'Hot' });
   }
 
